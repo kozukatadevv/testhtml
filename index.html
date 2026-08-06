@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obscura — HTML Obfuscator</title>
+<style>
+  :root{
+    --ink:#12151c;
+    --panel:#181c25;
+    --panel-2:#1e2330;
+    --line:#2b3040;
+    --line-soft:#232838;
+    --paper:#e9e4d6;
+    --paper-dim:#9aa1b4;
+    --brass:#c99b4a;
+    --brass-bright:#e6b862;
+    --wax:#8a3324;
+    --ok:#7fae7a;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+    --display: "Fraunces", "Iowan Old Style", Georgia, serif;
+    --sans: "Inter", -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--ink);color:var(--paper);font-family:var(--sans);}
+  body{
+    min-height:100vh;
+    background-image:
+      radial-gradient(circle at 15% 8%, rgba(201,155,74,0.07), transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(138,51,36,0.06), transparent 45%);
+  }
+
+  /* ---------- header ---------- */
+  header{
+    padding:38px clamp(20px,5vw,64px) 26px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:24px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:16px;}
+  .seal{
+    width:46px;height:46px;flex:none;position:relative;
+  }
+  .seal svg{width:100%;height:100%;display:block;}
+  .brand h1{
+    font-family:var(--display);
+    font-weight:600;
+    font-size:clamp(26px,3.2vw,34px);
+    letter-spacing:0.2px;
+    margin:0;
+    color:var(--paper);
+  }
+  .brand p{
+    margin:4px 0 0;
+    font-family:var(--mono);
+    font-size:12.5px;
+    letter-spacing:0.06em;
+    color:var(--paper-dim);
+    text-transform:uppercase;
+  }
+  .disclaimer{
+    max-width:340px;
+    font-size:12.5px;
+    line-height:1.55;
+    color:var(--paper-dim);
+    border-left:2px solid var(--line);
+    padding-left:14px;
+  }
+  .disclaimer b{color:var(--brass-bright);font-weight:600;}
+
+  /* ---------- layout ---------- */
+  main{
+    padding:32px clamp(20px,5vw,64px) 64px;
+    display:grid;
+    gap:22px;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:22px;
+  }
+  @media (max-width:880px){ .grid{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:3px;
+    display:flex;
+    flex-direction:column;
+    min-height:360px;
+    position:relative;
+  }
+  .panel-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:13px 16px;
+    border-bottom:1px dashed var(--line);
+  }
+  .panel-head .label{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--brass);
+  }
+  .panel-head .meta{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--paper-dim);
+  }
+  textarea{
+    flex:1;
+    resize:none;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--paper);
+    font-family:var(--mono);
+    font-size:13px;
+    line-height:1.55;
+    padding:16px;
+    min-height:300px;
+  }
+  textarea::placeholder{color:#4d5468;}
+  textarea[readonly]{color:#b9c2d6;}
+
+  .panel-foot{
+    display:flex;
+    gap:8px;
+    padding:10px 14px;
+    border-top:1px dashed var(--line);
+  }
+
+  /* ---------- buttons ---------- */
+  button{
+    font-family:var(--sans);
+    font-size:13px;
+    font-weight:600;
+    border-radius:2px;
+    cursor:pointer;
+    transition:filter .15s ease, transform .1s ease;
+  }
+  button:active{transform:translateY(1px);}
+  .btn-ghost{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--paper-dim);
+    padding:7px 12px;
+  }
+  .btn-ghost:hover{border-color:var(--brass);color:var(--brass-bright);}
+  .btn-main{
+    background:var(--brass);
+    border:1px solid var(--brass);
+    color:#1a1408;
+    padding:13px 26px;
+    font-size:14px;
+    letter-spacing:0.02em;
+  }
+  .btn-main:hover{filter:brightness(1.08);}
+  .btn-main:disabled{opacity:0.5;cursor:not-allowed;}
+
+  /* ---------- options ---------- */
+  .options{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:22px clamp(16px,3vw,28px);
+    display:grid;
+    grid-template-columns:1.1fr 1fr 1fr auto;
+    gap:26px;
+    align-items:start;
+  }
+  @media (max-width:880px){ .options{grid-template-columns:1fr;} }
+
+  .opt-group h3{
+    margin:0 0 12px;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--brass);
+  }
+  .method-list{display:flex;flex-direction:column;gap:8px;}
+  .method-list label{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    font-size:13px;
+    color:var(--paper);
+    cursor:pointer;
+    padding:6px 8px;
+    border:1px solid transparent;
+    border-radius:2px;
+  }
+  .method-list label:hover{border-color:var(--line-soft);}
+  .method-list input{margin-top:3px;accent-color:var(--brass);}
+  .method-list .m-desc{display:block;font-size:11.5px;color:var(--paper-dim);margin-top:2px;}
+
+  .toggle-list{display:flex;flex-direction:column;gap:10px;}
+  .toggle-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-size:13px;
+  }
+  .toggle-row span{color:var(--paper);}
+  .switch{
+    position:relative;width:36px;height:20px;flex:none;
+  }
+  .switch input{opacity:0;width:0;height:0;}
+  .slider-el{
+    position:absolute;inset:0;background:#2b3040;border-radius:999px;
+    transition:.15s;
+  }
+  .slider-el:before{
+    content:"";position:absolute;width:14px;height:14px;left:3px;top:3px;
+    background:var(--paper-dim);border-radius:50%;transition:.15s;
+  }
+  .switch input:checked + .slider-el{background:rgba(201,155,74,0.35);}
+  .switch input:checked + .slider-el:before{transform:translateX(16px);background:var(--brass-bright);}
+
+  .slider-row{display:flex;flex-direction:column;gap:8px;}
+  .slider-row input[type=range]{accent-color:var(--brass);width:100%;}
+  .slider-row .val{font-family:var(--mono);font-size:12px;color:var(--paper-dim);}
+
+  .action-col{display:flex;flex-direction:column;gap:12px;align-items:stretch;justify-content:center;min-width:180px;}
+  .action-col .hint{font-size:11px;color:var(--paper-dim);text-align:center;line-height:1.4;}
+
+  /* ---------- footer ---------- */
+  footer{
+    padding:20px clamp(20px,5vw,64px) 40px;
+    font-size:11.5px;
+    color:#5a6178;
+    font-family:var(--mono);
+    border-top:1px solid var(--line);
+  }
+
+  .stamp-flash{
+    position:absolute;top:12px;right:14px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:0.1em;
+    color:var(--ok);opacity:0;text-transform:uppercase;
+    transition:opacity .3s ease;
+  }
+  .stamp-flash.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="seal">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="46" stroke="#c99b4a" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <circle cx="50" cy="50" r="34" stroke="#c99b4a" stroke-width="1"/>
+        <path d="M50 24 L58 42 L78 42 L62 54 L68 74 L50 62 L32 74 L38 54 L22 42 L42 42 Z" fill="#c99b4a" opacity="0.85"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Obscura</h1>
+      <p>HTML source obfuscator</p>
+    </div>
+  </div>
+  <div class="disclaimer">
+    <b>Obscurity, not security.</b> This hides your markup from a casual "view source" glance. Any determined visitor can still decode client-side JavaScript. Don't rely on this to protect secrets, credentials, or anything security-critical.
+  </div>
+</header>
+
+<main>
+
+  <div class="grid">
+    <section class="panel">
+      <div class="panel-head">
+        <span class="label">Source · paste your HTML</span>
+        <span class="meta" id="inStats">0 bytes</span>
+      </div>
+      <textarea id="input" placeholder="<!DOCTYPE html>
+<html>
+  <head><title>My Page</title></head>
+  <body>
+    <h1>Hello, world</h1>
+  </body>
+</html>"></textarea>
+      <div class="panel-foot">
+        <button class="btn-ghost" id="loadSample">Load sample</button>
+        <button class="btn-ghost" id="clearInput">Clear</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <span class="label">Sealed output</span>
+        <span class="meta" id="outStats">—</span>
+      </div>
+      <div class="stamp-flash" id="stampFlash">Sealed ✓</div>
+      <textarea id="output" readonly placeholder="Your obfuscated file will appear here once sealed."></textarea>
+      <div class="panel-foot">
+        <button class="btn-ghost" id="copyOutput">Copy</button>
+        <button class="btn-ghost" id="downloadOutput">Download .html</button>
+        <button class="btn-ghost" id="previewOutput">Preview render</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="options">
+    <div class="opt-group">
+      <h3>Encoding method</h3>
+      <div class="method-list">
+        <label>
+          <input type="radio" name="method" value="base64" checked>
+          <span>Base64
+            <span class="m-desc">Standard, compact, fast to decode. Most common choice.</span>
+          </span>
+        </label>
+        <label>
+          <input type="radio" name="method" value="xor">
+          <span>XOR + Base64
+            <span class="m-desc">Byte-XORs the payload with a random key before encoding. Less recognizable at a glance.</span>
+          </span>
+        </label>
+        <label>
+          <input type="radio" name="method" value="charcode">
+          <span>Character codes
+            <span class="m-desc">Payload becomes a raw numeric array, rebuilt with String.fromCharCode.</span>
+          </span>
+        </label>
+        <label>
+          <input type="radio" name="method" value="escape">
+          <span>URI-escaped
+            <span class="m-desc">Percent-encoded string, chunked and concatenated.</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div class="opt-group">
+      <h3>Obfuscation strength</h3>
+      <div class="slider-row">
+        <label for="junk">Junk / decoy code</label>
+        <input type="range" id="junk" min="0" max="10" value="4">
+        <span class="val" id="junkVal">4 statements</span>
+      </div>
+      <div class="toggle-row" style="margin-top:14px;">
+        <span>Split &amp; concatenate string chunks</span>
+        <label class="switch"><input type="checkbox" id="split" checked><span class="slider-el"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Collapse whitespace before encoding</span>
+        <label class="switch"><input type="checkbox" id="minify"><span class="slider-el"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Minify wrapper script</span>
+        <label class="switch"><input type="checkbox" id="minifyOutput" checked><span class="slider-el"></span></label>
+      </div>
+    </div>
+
+    <div class="opt-group">
+      <h3>Page-level deterrents</h3>
+      <div class="toggle-list">
+        <div class="toggle-row">
+          <span>Disable right-click menu</span>
+          <label class="switch"><input type="checkbox" id="noRightClick"><span class="slider-el"></span></label>
+        </div>
+        <div class="toggle-row">
+          <span>Disable text selection</span>
+          <label class="switch"><input type="checkbox" id="noSelect"><span class="slider-el"></span></label>
+        </div>
+        <div class="toggle-row">
+          <span>Block F12 / Ctrl+U / Ctrl+Shift+I</span>
+          <label class="switch"><input type="checkbox" id="blockKeys"><span class="slider-el"></span></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-col">
+      <button class="btn-main" id="obfuscateBtn">Seal document</button>
+      <span class="hint">Generates a fresh random key, variable names, and chunking every time you seal.</span>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Obscura runs entirely in your browser — nothing you paste here is uploaded anywhere. Output is a single self-contained .html file that decodes itself via document.write on load.
+</footer>
+
+<script>
+(function(){
+  const $ = (id) => document.getElementById(id);
+  const input = $('input'), output = $('output');
+  const inStats = $('inStats'), outStats = $('outStats');
+  const stampFlash = $('stampFlash');
+
+  const sample = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Protected Page</title>
+    <style>body{font-family:sans-serif;background:#111;color:#eee;padding:40px;}</style>
+  </head>
+  <body>
+    <h1>This markup was sealed with Obscura</h1>
+    <p>View source on the output file — you'll see a wrapped, encoded payload instead of this.</p>
+  </body>
+</html>`;
+
+  $('loadSample').addEventListener('click', () => { input.value = sample; updateInStats(); });
+  $('clearInput').addEventListener('click', () => { input.value=''; output.value=''; updateInStats(); outStats.textContent='—'; });
+
+  const junkSlider = $('junk'), junkVal = $('junkVal');
+  junkSlider.addEventListener('input', () => {
+    junkVal.textContent = junkSlider.value + ' statement' + (junkSlider.value==='1'?'':'s');
+  });
+
+  function byteLen(str){ return new Blob([str]).size; }
+  function updateInStats(){ inStats.textContent = byteLen(input.value) + ' bytes'; }
+  input.addEventListener('input', updateInStats);
+
+  function randName(len){
+    const chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let s='_';
+    for(let i=0;i<len;i++) s+=chars[Math.floor(Math.random()*chars.length)];
+    return s;
+  }
+  function randInt(min,max){ return min + Math.floor(Math.random()*(max-min+1)); }
+
+  function splitStringLiteral(s, minLen, maxLen){
+    const pieces=[];
+    let i=0;
+    while(i<s.length){
+      const len = randInt(minLen,maxLen);
+      pieces.push(s.slice(i,i+len));
+      i+=len;
+    }
+    if(pieces.length===0) pieces.push('');
+    return pieces.map(p=>JSON.stringify(p)).join('+');
+  }
+
+  function genJunk(n, oneLine){
+    const lines=[];
+    for(let i=0;i<n;i++){
+      const a=randName(randInt(4,8));
+      const b=randName(randInt(4,8));
+      const kind=randInt(0,2);
+      if(kind===0){
+        lines.push(`var ${a}=${randInt(1000,98765)};`);
+      } else if(kind===1){
+        lines.push(`function ${a}(${b}){return ${b}?${b}:${randInt(1,999)};}`);
+      } else {
+        const arr = Array.from({length:randInt(3,7)},()=>randInt(0,255)).join(',');
+        lines.push(`var ${a}=[${arr}];`);
+      }
+    }
+    return lines.join(oneLine ? '' : '\n');
+  }
+
+  function collapseWhitespace(html){
+    return html.replace(/>\s+</g, '> <').trim();
+  }
+
+  function buildProtections(opts){
+    let html = '';
+    if(opts.noRightClick){
+      html += '<script>document.addEventListener("contextmenu",function(e){e.preventDefault();});<\/script>';
+    }
+    if(opts.noSelect){
+      html += '<style>*{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;}<\/style>';
+      html += '<script>document.addEventListener("selectstart",function(e){e.preventDefault();});<\/script>';
+    }
+    if(opts.blockKeys){
+      html += '<script>document.addEventListener("keydown",function(e){var k=e.keyCode;if(k===123||(e.ctrlKey&&e.shiftKey&&(k===73||k===74||k===67))||(e.ctrlKey&&k===85)){e.preventDefault();return false;}});<\/script>';
+    }
+    return html;
+  }
+
+  function obfuscate(html, opts){
+    const processed = opts.minify ? collapseWhitespace(html) : html;
+    const payload = encodeURIComponent(processed);
+
+    const varData = randName(randInt(5,9));
+    const varKey  = randName(randInt(5,9));
+    let dataLiteral, decodeExpr, keyLine = '';
+
+    if(opts.method === 'base64'){
+      const b64 = btoa(payload);
+      dataLiteral = opts.split ? splitStringLiteral(b64, 3, 9) : JSON.stringify(b64);
+      decodeExpr = `decodeURIComponent(atob(${varData}))`;
+    } else if(opts.method === 'xor'){
+      const key = randInt(3, 250);
+      const xored = Array.from(payload).map(c => c.charCodeAt(0) ^ key);
+      const xoredStr = String.fromCharCode.apply(null, xored);
+      const b64 = btoa(xoredStr);
+      dataLiteral = opts.split ? splitStringLiteral(b64, 3, 9) : JSON.stringify(b64);
+      keyLine = `var ${varKey}=${key};`;
+      decodeExpr = `(function(s,k){var r="";for(var i=0;i<s.length;i++){r+=String.fromCharCode(s.charCodeAt(i)^k);}return decodeURIComponent(r);})(atob(${varData}),${varKey})`;
+    } else if(opts.method === 'charcode'){
+      const codes = Array.from(payload).map(c => c.charCodeAt(0));
+      dataLiteral = `[${codes.join(',')}]`;
+      decodeExpr = `decodeURIComponent(String.fromCharCode.apply(null,${varData}))`;
+    } else { // escape
+      dataLiteral = opts.split ? splitStringLiteral(payload, 3, 9) : JSON.stringify(payload);
+      decodeExpr = `decodeURIComponent(${varData})`;
+    }
+
+    const protections = buildProtections(opts);
+    const finalExpr = protections
+      ? `${decodeExpr}+${JSON.stringify(protections)}`
+      : decodeExpr;
+
+    if(opts.minifyOutput){
+      const junkLine = opts.junk > 0 ? genJunk(opts.junk, true) : '';
+      const stmts = [
+        junkLine,
+        `var ${varData}=${dataLiteral};`,
+        keyLine,
+        `document.write(${finalExpr});`
+      ].filter(Boolean).join('');
+      return `<script>(function(){${stmts}})();<\/script>`;
+    }
+
+    const junk = opts.junk > 0 ? genJunk(opts.junk, false) + '\n' : '';
+    return `<script>
+(function(){
+${junk}var ${varData}=${dataLiteral};
+${keyLine}
+document.write(${finalExpr});
+})();
+<\/script>`;
+  }
+
+  $('obfuscateBtn').addEventListener('click', () => {
+    const html = input.value;
+    if(!html.trim()){
+      output.value = '';
+      outStats.textContent = '—';
+      input.focus();
+      return;
+    }
+    const method = document.querySelector('input[name="method"]:checked').value;
+    const opts = {
+      method,
+      junk: parseInt(junkSlider.value, 10),
+      split: $('split').checked,
+      minify: $('minify').checked,
+      minifyOutput: $('minifyOutput').checked,
+      noRightClick: $('noRightClick').checked,
+      noSelect: $('noSelect').checked,
+      blockKeys: $('blockKeys').checked,
+    };
+    const result = obfuscate(html, opts);
+    output.value = result;
+    outStats.textContent = byteLen(result) + ' bytes  ·  ' + Math.round((byteLen(result)/Math.max(byteLen(html),1))*100) + '% of original';
+
+    stampFlash.classList.add('show');
+    setTimeout(()=>stampFlash.classList.remove('show'), 1400);
+  });
+
+  $('copyOutput').addEventListener('click', async () => {
+    if(!output.value) return;
+    try{
+      await navigator.clipboard.writeText(output.value);
+      const btn = $('copyOutput');
+      const orig = btn.textContent;
+      btn.textContent = 'Copied';
+      setTimeout(()=>btn.textContent=orig, 1200);
+    }catch(e){
+      output.select();
+      document.execCommand('copy');
+    }
+  });
+
+  $('downloadOutput').addEventListener('click', () => {
+    if(!output.value) return;
+    const blob = new Blob([output.value], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'obfuscated.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  $('previewOutput').addEventListener('click', () => {
+    if(!output.value) return;
+    const w = window.open('', '_blank');
+    if(!w){ alert('Please allow popups to preview the rendered result.'); return; }
+    w.document.open();
+    w.document.write(output.value);
+    w.document.close();
+  });
+
+  updateInStats();
+})();
+</script>
+
+</body>
+</html>
